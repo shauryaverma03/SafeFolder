@@ -192,12 +192,13 @@ final class FolderCell: UICollectionViewCell {
             fileCountLabel.leadingAnchor.constraint(equalTo: innerView.leadingAnchor, constant: 16),
             fileCountLabel.trailingAnchor.constraint(equalTo: innerView.trailingAnchor, constant: -16),
             
-            // Date label
+            // Date label (constrained to not overlap security badge)
             dateLabel.bottomAnchor.constraint(equalTo: innerView.bottomAnchor, constant: -12),
             dateLabel.leadingAnchor.constraint(equalTo: innerView.leadingAnchor, constant: 16),
+            dateLabel.trailingAnchor.constraint(lessThanOrEqualTo: securityBadge.leadingAnchor, constant: -4),
             
             // Security badge
-            securityBadge.bottomAnchor.constraint(equalTo: innerView.bottomAnchor, constant: -10),
+            securityBadge.centerYAnchor.constraint(equalTo: dateLabel.centerYAnchor),
             securityBadge.trailingAnchor.constraint(equalTo: innerView.trailingAnchor, constant: -12),
             securityBadge.heightAnchor.constraint(equalToConstant: 20),
             
@@ -242,7 +243,7 @@ final class FolderCell: UICollectionViewCell {
     func configure(with folder: Folder) {
         nameLabel.text = folder.name
         fileCountLabel.text = folder.fileCountText
-        dateLabel.text = folder.formattedDate
+        dateLabel.text = folder.shortFormattedDate
         
         // Lock icon visibility
         lockIconView.isHidden = !folder.isSecure
@@ -255,12 +256,11 @@ final class FolderCell: UICollectionViewCell {
             securityBadge.isHidden = false
             switch folder.authType {
             case .password:
-                securityBadgeLabel.text = "Password"
+                securityBadgeLabel.text = "🔑"
                 securityBadge.backgroundColor = AppTheme.accentGradientEnd.withAlphaComponent(0.15)
                 securityBadgeLabel.textColor = AppTheme.accentGradientEnd
             case .biometric:
-                let bioType = BiometricManager.shared.availableBiometricType
-                securityBadgeLabel.text = bioType.displayName
+                securityBadgeLabel.text = "🔐"
                 securityBadge.backgroundColor = AppTheme.successColor.withAlphaComponent(0.15)
                 securityBadgeLabel.textColor = AppTheme.successColor
             case .none:

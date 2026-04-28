@@ -200,6 +200,17 @@ final class FolderListViewController: UIViewController {
     
     private func confirmDelete(at index: Int) {
         guard let folder = viewModel.folder(at: index) else { return }
+        
+        if folder.isSecure {
+            // Require authentication before deleting a secure folder
+            authenticateBeforeDeleteFolder(folder: folder, at: index)
+        } else {
+            showFolderDeleteConfirmation(folder: folder, at: index)
+        }
+    }
+    
+    /// Shows the final delete confirmation alert
+    private func showFolderDeleteConfirmation(folder: Folder, at index: Int) {
         let alert = UIAlertController(
             title: "Delete Folder?",
             message: "Delete \"\(folder.name)\" and all its contents? This cannot be undone.",
@@ -211,6 +222,45 @@ final class FolderListViewController: UIViewController {
             self?.viewModel.deleteFolder(at: index)
         })
         present(alert, animated: true)
+    }
+    
+    /// Requires authentication before allowing a secure folder to be deleted
+    private func authenticateBeforeDeleteFolder(folder: Folder, at index: Int) {
+        if folder.authType == .biometric {
+            // Face ID / Touch ID
+            BiometricManager.shared.authenticate(reason: "Authenticate to delete \"\(folder.name)\"") { [weak self] result in
+                switch result {
+                case .success:
+                    self?.showFolderDeleteConfirmation(folder: folder, at: index)
+                case .failure(let error):
+                    if case .userCancelled = error { return }
+                    self?.showError(error.localizedDescription)
+                }
+            }
+        } else if folder.authType == .password {
+            // Password check
+            let alert = UIAlertController(
+                title: "Authenticate",
+                message: "Enter password to delete \"\(folder.name)\"",
+                preferredStyle: .alert
+            )
+            alert.addTextField { field in
+                field.placeholder = "Password"
+                field.isSecureTextEntry = true
+            }
+            alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
+            alert.addAction(UIAlertAction(title: "Verify", style: .default) { [weak self] _ in
+                let enteredPassword = alert.textFields?.first?.text ?? ""
+                if KeychainManager.shared.verifyPassword(enteredPassword, forFolderID: folder.id) {
+                    self?.showFolderDeleteConfirmation(folder: folder, at: index)
+                } else {
+                    self?.showError("Incorrect password. Cannot delete folder.")
+                }
+            })
+            present(alert, animated: true)
+        } else {
+            showFolderDeleteConfirmation(folder: folder, at: index)
+        }
     }
     
     private func showConversionOptions(at index: Int) {

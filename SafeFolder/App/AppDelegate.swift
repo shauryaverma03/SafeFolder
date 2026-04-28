@@ -27,20 +27,34 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         // Create main window
         window = UIWindow(frame: UIScreen.main.bounds)
         
-        // Set up root navigation controller with folder list
-        let folderListVC = FolderListViewController()
-        let navigationController = UINavigationController(rootViewController: folderListVC)
-        
         // Configure navigation bar appearance globally
         configureNavigationBarAppearance()
         
-        window?.rootViewController = navigationController
+        // Show animated splash screen first
+        let splashVC = SplashViewController()
+        splashVC.onComplete = { [weak self] in
+            self?.transitionToMainApp()
+        }
+        
+        window?.rootViewController = splashVC
         window?.makeKeyAndVisible()
         
         // Register for app lifecycle notifications
         registerLifecycleObservers()
         
         return true
+    }
+    
+    /// Transitions from splash screen to the main folder list
+    private func transitionToMainApp() {
+        let folderListVC = FolderListViewController()
+        let navigationController = UINavigationController(rootViewController: folderListVC)
+        
+        // Smooth crossfade transition
+        guard let window = window else { return }
+        UIView.transition(with: window, duration: 0.4, options: .transitionCrossDissolve, animations: {
+            window.rootViewController = navigationController
+        })
     }
     
     // MARK: - Navigation Bar Appearance

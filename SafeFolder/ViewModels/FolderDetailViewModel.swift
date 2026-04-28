@@ -186,6 +186,23 @@ final class FolderDetailViewModel {
         }
     }
     
+    // MARK: - Sorting
+    
+    /// Sorts the files by the specified option
+    func sort(by option: FileSortOption, ascending: Bool) {
+        switch option {
+        case .name:
+            files.sort { ascending ? $0.fileName < $1.fileName : $0.fileName > $1.fileName }
+        case .kind:
+            files.sort { ascending ? $0.fileExtension < $1.fileExtension : $0.fileExtension > $1.fileExtension }
+        case .date:
+            files.sort { ascending ? $0.addedAt < $1.addedAt : $0.addedAt > $1.addedAt }
+        case .size:
+            files.sort { ascending ? $0.fileSize < $1.fileSize : $0.fileSize > $1.fileSize }
+        }
+        delegate?.filesDidUpdate()
+    }
+    
     // MARK: - File Operations
     
     /// Adds an image file to the folder

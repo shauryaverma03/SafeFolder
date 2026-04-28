@@ -119,8 +119,8 @@ final class FileCell: UICollectionViewCell {
             // File icon (centered in thumbnail area for non-image files)
             fileIconView.centerXAnchor.constraint(equalTo: thumbnailView.centerXAnchor),
             fileIconView.centerYAnchor.constraint(equalTo: thumbnailView.centerYAnchor),
-            fileIconView.widthAnchor.constraint(equalToConstant: 32),
-            fileIconView.heightAnchor.constraint(equalToConstant: 32),
+            fileIconView.widthAnchor.constraint(equalToConstant: 44),
+            fileIconView.heightAnchor.constraint(equalToConstant: 44),
             
             // Extension badge (bottom-right of thumbnail)
             extensionBadge.bottomAnchor.constraint(equalTo: thumbnailView.bottomAnchor, constant: -4),

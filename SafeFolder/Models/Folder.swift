@@ -75,6 +75,13 @@ struct Folder: Codable, Identifiable, Equatable {
         return formatter.string(from: createdAt)
     }
     
+    /// Short formatted date for card display (avoids overlap)
+    var shortFormattedDate: String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "dd MMM yyyy"
+        return formatter.string(from: createdAt)
+    }
+    
     /// File count display string
     var fileCountText: String {
         switch fileCount {

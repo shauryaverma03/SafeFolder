@@ -10,10 +10,36 @@ import PhotosUI
 import QuickLook
 
 /// Displays files inside a folder with grid layout
+/// Sort options for files
+enum FileSortOption: String {
+    case date = "Date"
+    case name = "Name"
+    case kind = "Kind"
+    case size = "Size"
+}
+
+/// View mode for file display
+enum FileViewMode {
+    case icons
+    case list
+}
+
 final class FolderDetailViewController: UIViewController {
     
     private let viewModel: FolderDetailViewModel
     private var hasAnimatedCells = false
+    
+    // MARK: - Persisted Preferences
+    
+    private var currentSort: FileSortOption {
+        didSet { UserDefaults.standard.set(currentSort.rawValue, forKey: "SafeFolder.sortOption") }
+    }
+    private var sortAscending: Bool {
+        didSet { UserDefaults.standard.set(sortAscending, forKey: "SafeFolder.sortAscending") }
+    }
+    private var viewMode: FileViewMode {
+        didSet { UserDefaults.standard.set(viewMode == .list ? "list" : "icons", forKey: "SafeFolder.viewMode") }
+    }
     
     // MARK: - Auto-lock Toast
     
@@ -40,6 +66,7 @@ final class FolderDetailViewController: UIViewController {
         cv.delegate = self
         cv.dataSource = self
         cv.register(FileCell.self, forCellWithReuseIdentifier: FileCell.reuseIdentifier)
+        cv.register(FileListCell.self, forCellWithReuseIdentifier: FileListCell.reuseIdentifier)
         cv.showsVerticalScrollIndicator = false
         cv.contentInset = UIEdgeInsets(top: 8, left: 0, bottom: 100, right: 0)
         return cv
@@ -112,6 +139,14 @@ final class FolderDetailViewController: UIViewController {
     
     init(folder: Folder) {
         self.viewModel = FolderDetailViewModel(folder: folder)
+        
+        // Restore saved preferences
+        let savedSort = UserDefaults.standard.string(forKey: "SafeFolder.sortOption") ?? "Date"
+        self.currentSort = FileSortOption(rawValue: savedSort) ?? .date
+        self.sortAscending = UserDefaults.standard.bool(forKey: "SafeFolder.sortAscending")
+        let savedMode = UserDefaults.standard.string(forKey: "SafeFolder.viewMode") ?? "icons"
+        self.viewMode = savedMode == "list" ? .list : .icons
+        
         super.init(nibName: nil, bundle: nil)
     }
     
@@ -189,18 +224,101 @@ final class FolderDetailViewController: UIViewController {
             image: UIImage(systemName: "plus.circle.fill"),
             style: .plain, target: self, action: #selector(addFileTapped)
         )
-        navigationItem.rightBarButtonItem = addBarBtn
+        let sortBarBtn = UIBarButtonItem(
+            image: UIImage(systemName: "arrow.up.arrow.down.circle"),
+            menu: createSortMenu()
+        )
+        navigationItem.rightBarButtonItems = [addBarBtn, sortBarBtn]
+    }
+    
+    private func createSortMenu() -> UIMenu {
+        // View mode section
+        let iconsAction = UIAction(
+            title: "Icons",
+            image: UIImage(systemName: "square.grid.2x2"),
+            state: viewMode == .icons ? .on : .off
+        ) { [weak self] _ in
+            self?.viewMode = .icons
+            self?.applyLayout()
+        }
+        let listAction = UIAction(
+            title: "List",
+            image: UIImage(systemName: "list.bullet"),
+            state: viewMode == .list ? .on : .off
+        ) { [weak self] _ in
+            self?.viewMode = .list
+            self?.applyLayout()
+        }
+        let viewSection = UIMenu(title: "", options: .displayInline, children: [iconsAction, listAction])
+        
+        // Sort options section
+        let nameSort = UIAction(
+            title: "Name",
+            state: currentSort == .name ? .on : .off
+        ) { [weak self] _ in self?.applySort(.name) }
+        let kindSort = UIAction(
+            title: "Kind",
+            state: currentSort == .kind ? .on : .off
+        ) { [weak self] _ in self?.applySort(.kind) }
+        let dateSort = UIAction(
+            title: "Date",
+            subtitle: sortAscending ? "Oldest to Newest" : "Newest to Oldest",
+            state: currentSort == .date ? .on : .off
+        ) { [weak self] _ in self?.applySort(.date) }
+        let sizeSort = UIAction(
+            title: "Size",
+            state: currentSort == .size ? .on : .off
+        ) { [weak self] _ in self?.applySort(.size) }
+        let sortSection = UIMenu(title: "", options: .displayInline, children: [nameSort, kindSort, dateSort, sizeSort])
+        
+        return UIMenu(children: [viewSection, sortSection])
+    }
+    
+    private func applySort(_ option: FileSortOption) {
+        if currentSort == option {
+            sortAscending.toggle()
+        } else {
+            currentSort = option
+            sortAscending = false
+        }
+        viewModel.sort(by: option, ascending: sortAscending)
+        // Rebuild the menu to reflect new state
+        if let sortBtn = navigationItem.rightBarButtonItems?.last {
+            sortBtn.menu = createSortMenu()
+        }
+    }
+    
+    private func applyLayout() {
+        hasAnimatedCells = false
+        collectionView.setCollectionViewLayout(createGridLayout(), animated: false)
+        collectionView.reloadData()
+        // Rebuild the menu to reflect new state
+        if let sortBtn = navigationItem.rightBarButtonItems?.last {
+            sortBtn.menu = createSortMenu()
+        }
     }
     
     private func createGridLayout() -> UICollectionViewCompositionalLayout {
-        let itemSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(1.0/3.0), heightDimension: .absolute(160))
-        let item = NSCollectionLayoutItem(layoutSize: itemSize)
-        item.contentInsets = NSDirectionalEdgeInsets(top: 4, leading: 4, bottom: 4, trailing: 4)
-        let groupSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(1.0), heightDimension: .absolute(160))
-        let group = NSCollectionLayoutGroup.horizontal(layoutSize: groupSize, subitems: [item, item, item])
-        let section = NSCollectionLayoutSection(group: group)
-        section.contentInsets = NSDirectionalEdgeInsets(top: 8, leading: 8, bottom: 8, trailing: 8)
-        return UICollectionViewCompositionalLayout(section: section)
+        if viewMode == .list {
+            // Apple Files-style list: full-width rows, no padding
+            let itemSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(1.0), heightDimension: .absolute(68))
+            let item = NSCollectionLayoutItem(layoutSize: itemSize)
+            let groupSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(1.0), heightDimension: .absolute(68))
+            let group = NSCollectionLayoutGroup.horizontal(layoutSize: groupSize, subitems: [item])
+            let section = NSCollectionLayoutSection(group: group)
+            section.contentInsets = NSDirectionalEdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0)
+            return UICollectionViewCompositionalLayout(section: section)
+        } else {
+            // 2-column grid with bigger cells
+            let itemSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(0.5), heightDimension: .absolute(220))
+            let item = NSCollectionLayoutItem(layoutSize: itemSize)
+            item.contentInsets = NSDirectionalEdgeInsets(top: 4, leading: 4, bottom: 4, trailing: 4)
+            let groupSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(1.0), heightDimension: .absolute(220))
+            let group = NSCollectionLayoutGroup.horizontal(layoutSize: groupSize, subitems: [item, item])
+            let section = NSCollectionLayoutSection(group: group)
+            section.contentInsets = NSDirectionalEdgeInsets(top: 8, leading: 8, bottom: 8, trailing: 8)
+            return UICollectionViewCompositionalLayout(section: section)
+        }
     }
     
     private func registerNotifications() {
@@ -282,6 +400,17 @@ final class FolderDetailViewController: UIViewController {
     
     private func confirmDelete(at index: Int) {
         guard let file = viewModel.file(at: index) else { return }
+        
+        if viewModel.folder.isSecure {
+            // Require re-authentication before deleting from secure folder
+            authenticateBeforeDelete(file: file, at: index)
+        } else {
+            showDeleteConfirmation(file: file, at: index)
+        }
+    }
+    
+    /// Shows the final delete confirmation alert
+    private func showDeleteConfirmation(file: FileItem, at index: Int) {
         let alert = UIAlertController(title: "Delete File?", message: "Delete \"\(file.fileName)\"?", preferredStyle: .alert)
         alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
         alert.addAction(UIAlertAction(title: "Delete", style: .destructive) { [weak self] _ in
@@ -289,6 +418,47 @@ final class FolderDetailViewController: UIViewController {
             self?.viewModel.deleteFile(at: index)
         })
         present(alert, animated: true)
+    }
+    
+    /// Requires biometric or password authentication before allowing delete
+    private func authenticateBeforeDelete(file: FileItem, at index: Int) {
+        if viewModel.folder.authType == .biometric {
+            // Face ID / Touch ID check
+            BiometricManager.shared.authenticate(reason: "Authenticate to delete \"\(file.fileName)\"") { [weak self] result in
+                switch result {
+                case .success:
+                    self?.showDeleteConfirmation(file: file, at: index)
+                case .failure(let error):
+                    if case .userCancelled = error { return }
+                    self?.showError(error.localizedDescription)
+                }
+            }
+        } else if viewModel.folder.authType == .password {
+            // Password check
+            let alert = UIAlertController(
+                title: "Authenticate",
+                message: "Enter password to delete \"\(file.fileName)\"",
+                preferredStyle: .alert
+            )
+            alert.addTextField { field in
+                field.placeholder = "Password"
+                field.isSecureTextEntry = true
+            }
+            alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
+            alert.addAction(UIAlertAction(title: "Verify", style: .default) { [weak self] _ in
+                guard let self = self else { return }
+                let enteredPassword = alert.textFields?.first?.text ?? ""
+                if KeychainManager.shared.verifyPassword(enteredPassword, forFolderID: self.viewModel.folder.id) {
+                    self.showDeleteConfirmation(file: file, at: index)
+                } else {
+                    self.showError("Incorrect password. Cannot delete file.")
+                }
+            })
+            present(alert, animated: true)
+        } else {
+            // Fallback: just confirm
+            showDeleteConfirmation(file: file, at: index)
+        }
     }
     
     private func previewFile(at index: Int) {
@@ -320,14 +490,26 @@ extension FolderDetailViewController: UICollectionViewDataSource {
     }
     
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
-        guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: FileCell.reuseIdentifier, for: indexPath) as? FileCell,
-              let file = viewModel.file(at: indexPath.item) else {
+        guard let file = viewModel.file(at: indexPath.item) else {
             return UICollectionViewCell()
         }
         let thumbnail = viewModel.thumbnail(for: file)
-        cell.configure(with: file, thumbnail: thumbnail)
-        if !hasAnimatedCells { cell.animateAppearance(delay: Double(indexPath.item) * 0.03) }
-        return cell
+        
+        if viewMode == .list {
+            guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: FileListCell.reuseIdentifier, for: indexPath) as? FileListCell else {
+                return UICollectionViewCell()
+            }
+            cell.configure(with: file, thumbnail: thumbnail)
+            if !hasAnimatedCells { cell.animateAppearance(delay: Double(indexPath.item) * 0.03) }
+            return cell
+        } else {
+            guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: FileCell.reuseIdentifier, for: indexPath) as? FileCell else {
+                return UICollectionViewCell()
+            }
+            cell.configure(with: file, thumbnail: thumbnail)
+            if !hasAnimatedCells { cell.animateAppearance(delay: Double(indexPath.item) * 0.03) }
+            return cell
+        }
     }
 }
 
