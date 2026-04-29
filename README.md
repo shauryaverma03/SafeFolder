@@ -1,207 +1,213 @@
-# 🔒 Safe Folder
+<p align="center">
+  <img src="screenshots/app_icon.png" width="120" alt="Safe Folder Icon"/>
+</p>
 
-A production-grade iOS application for securely managing files and folders with password protection and biometric authentication.
+<h1 align="center">🛡️ Safe Folder</h1>
 
----
+<p align="center">
+  <strong>A premium, production-grade iOS file vault with biometric security</strong>
+</p>
 
-## 📱 Overview
-
-Safe Folder is a privacy-first file management app that lets you organize photos, videos, documents, and other files into folders — with the option to lock sensitive folders behind a password or Face ID/Touch ID authentication.
-
-### Key Highlights
-- **Military-grade security**: SHA-256 password hashing stored in iOS Keychain
-- **Biometric authentication**: Face ID & Touch ID support
-- **Auto-lock protection**: 15-second inactivity timeout for secure folders
-- **Modern UI**: Dark navy theme with electric blue accents, smooth animations
-- **Full file management**: Import from Camera, Photo Library, or Files app
-
----
-
-## 🏗 Architecture
-
-The app follows the **MVVM (Model-View-ViewModel)** architecture pattern:
-
-```
-┌─────────────────────────────────────────────┐
-│                    Views                     │
-│  (ViewControllers + Cells)                  │
-│  - Handles UI rendering & user interaction  │
-│  - Delegates actions to ViewModels          │
-└──────────────────┬──────────────────────────┘
-                   │ Delegate/Callback
-┌──────────────────▼──────────────────────────┐
-│                ViewModels                    │
-│  - Business logic & state management        │
-│  - Data transformation for display          │
-│  - Communicates with Utility managers       │
-└──────────────────┬──────────────────────────┘
-                   │
-┌──────────────────▼──────────────────────────┐
-│            Models + Utilities               │
-│  - Data models (Folder, FileItem)           │
-│  - Keychain, Biometric, FileStorage mgrs    │
-│  - Codable persistence (UserDefaults)       │
-└─────────────────────────────────────────────┘
-```
-
----
-
-## 📁 Project Structure
-
-```
-SafeFolder/
-├── App/
-│   ├── AppDelegate.swift          # App lifecycle, privacy overlay
-│   └── AppTheme.swift             # Design system (colors, fonts, layout)
-├── Models/
-│   ├── Folder.swift               # Folder data model
-│   └── FileItem.swift             # File item data model
-├── ViewModels/
-│   ├── FolderListViewModel.swift  # Home screen business logic
-│   └── FolderDetailViewModel.swift # File management + auto-lock
-├── Views/
-│   ├── FolderListViewController.swift   # Home (folder grid)
-│   ├── FolderDetailViewController.swift # File grid + file picker
-│   ├── CreateFolderViewController.swift # Create folder bottom sheet
-│   ├── AuthViewController.swift         # Password/biometric auth
-│   └── Cells/
-│       ├── FolderCell.swift       # Folder card cell
-│       └── FileCell.swift         # File grid cell
-├── Utilities/
-│   ├── KeychainManager.swift      # Secure password storage
-│   ├── BiometricManager.swift     # Face ID / Touch ID
-│   ├── FileStorageManager.swift   # FileManager operations
-│   └── HashingUtility.swift       # SHA-256 hashing
-└── Resources/
-    ├── Assets.xcassets            # App icons & colors
-    ├── LaunchScreen.storyboard    # Launch screen
-    └── Info.plist                 # Permissions & config
-```
-
----
-
-## 🔐 Security Approach
-
-### Password Security
-1. Passwords are **never stored in plain text**
-2. All passwords are hashed using **SHA-256** (via CryptoKit) before storage
-3. Hashed passwords are stored in the **iOS Keychain** (not UserDefaults)
-4. Keychain items are set to `kSecAttrAccessibleWhenUnlockedThisDeviceOnly`
-
-### Biometric Authentication
-- Uses **LocalAuthentication** framework (LAContext)
-- Supports **Face ID**, **Touch ID**, and **Optic ID**
-- Graceful fallback when biometrics are unavailable
-- Settings redirect when permissions aren't granted
-
-### Auto-Lock
-- Secure folders auto-lock after **15 seconds** of inactivity
-- Visual countdown toast warns users before locking ("Locking in 3...2...1")
-- Timer resets on any touch, scroll, or file operation
-- App background → immediate lock + blur privacy overlay
-
-### App Lifecycle Protection
-- **Background**: Blur overlay hides all content instantly
-- **Killed while open**: Secure folder locks on next launch
-- **Foreground return**: Requires re-authentication
-
----
-
-## ✨ Features
-
-| Feature | Description |
-|---------|-------------|
-| 📂 Folder Management | Create, delete, secure/unsecure folders |
-| 🔒 Password Protection | SHA-256 hashed, Keychain-stored passwords |
-| 👆 Biometric Auth | Face ID / Touch ID with fallback |
-| ⏱ Auto-Lock | 15s inactivity timeout with countdown |
-| 📸 Camera Import | Capture photos directly into folders |
-| 🖼 Photo Library | Import photos and videos via PHPicker |
-| 📄 Document Import | Import PDFs, docs via UIDocumentPicker |
-| 👁 File Preview | QuickLook for docs, full-screen for images |
-| 🎨 Dark/Light Mode | Full dynamic color support |
-| 📱 Context Menus | Long-press for folder operations |
-| ✨ Animations | Spring animations, haptic feedback |
-| 🛡 Privacy Overlay | Blur screen on app switch |
-
----
-
-## 🚀 How to Run
-
-### Requirements
-- **Xcode 15.0+**
-- **iOS 15.0+** deployment target
-- **macOS Ventura+** (for Xcode 15)
-- Physical device recommended (for Camera & Biometrics)
-
-### Steps
-
-1. **Clone or download** the project
-2. **Open** `SafeFolder.xcodeproj` in Xcode
-3. **Select** your development team under Signing & Capabilities
-4. **Choose** a simulator or connected device
-5. **Build & Run** (⌘R)
-
-### Permissions
-The app requests these permissions (configured in Info.plist):
-- 📷 **Camera** — for capturing photos
-- 🖼 **Photo Library** — for importing photos/videos
-- 👤 **Face ID** — for biometric authentication
-
----
-
-## 🎨 Design
-
-- **Color Scheme**: Deep navy background with electric blue (#4078FF) → purple (#8C4DFF) gradient accents
-- **Typography**: SF Pro (system font) with clear weight hierarchy
-- **Cards**: Rounded corners (16pt), soft shadows, subtle gradients
-- **Animations**: Spring physics for modals, staggered cell entrances
-- **Haptics**: Impact feedback on actions, notification feedback on auth
+<p align="center">
+  <img src="https://img.shields.io/badge/Platform-iOS%2015%2B-blue?style=flat-square" alt="Platform"/>
+  <img src="https://img.shields.io/badge/Swift-5.9-orange?style=flat-square" alt="Swift"/>
+  <img src="https://img.shields.io/badge/UIKit-Programmatic-green?style=flat-square" alt="UIKit"/>
+  <img src="https://img.shields.io/badge/Architecture-MVVM-purple?style=flat-square" alt="Architecture"/>
+  <img src="https://img.shields.io/badge/License-MIT-lightgrey?style=flat-square" alt="License"/>
+</p>
 
 ---
 
 ## 📸 Screenshots
 
-> *Screenshots coming soon — run the app to see the full experience!*
+<p align="center">
+  <img src="screenshots/01_home_screen.png" width="180" alt="Home Screen"/>
+  &nbsp;&nbsp;
+  <img src="screenshots/02_create_folder.png" width="180" alt="Create Folder"/>
+  &nbsp;&nbsp;
+  <img src="screenshots/03_face_id_auth.png" width="180" alt="Face ID Auth"/>
+  &nbsp;&nbsp;
+  <img src="screenshots/04_file_grid.png" width="180" alt="File Grid"/>
+  &nbsp;&nbsp;
+  <img src="screenshots/05_sort_menu.png" width="180" alt="Sort Menu"/>
+</p>
 
-| Home Screen | Create Folder | Secure Folder Auth |
-|:-----------:|:-------------:|:-----------------:|
-| Folder grid with cards | Bottom sheet modal | Password / Face ID |
-
-| File Grid | Image Preview | Auto-Lock Toast |
-|:---------:|:-------------:|:---------------:|
-| 3-column grid | Pinch-to-zoom | Countdown warning |
+<p align="center">
+  <em>Home Screen • Create Folder • Face ID Auth • File Grid • Sort & View</em>
+</p>
 
 ---
 
-## 🛠 Tech Stack
+## ✨ Features
 
-| Technology | Purpose |
-|-----------|---------|
-| Swift 5.9+ | Language |
-| UIKit | User interface (programmatic) |
-| CryptoKit | SHA-256 password hashing |
-| LocalAuthentication | Face ID / Touch ID |
-| Security (Keychain) | Secure password storage |
-| FileManager | File system operations |
-| PhotosUI (PHPicker) | Photo library access |
-| QuickLook | Document/PDF preview |
-| UserDefaults + Codable | Metadata persistence |
+### 🔐 Security
+- **Face ID / Touch ID** — Unlock folders instantly with biometric authentication
+- **Password Protection** — Alternatively lock folders with a secure password (SHA-256 hashed, stored in iOS Keychain)
+- **Auto-Lock** — Folders automatically lock after 15 seconds of inactivity with visual countdown
+- **Delete Protection** — Secure folders require re-authentication before files or the folder itself can be deleted
+- **Privacy Overlay** — Background blur prevents data exposure when app is in the multitasking view
+
+### 📁 File Management
+- **Multi-format Support** — Photos, videos, PDFs, documents (DOCX, XLSX, etc.)
+- **Multiple Import Options** — Camera capture, Photo Library (PHPicker), or Files app (Document Picker)
+- **Smart Thumbnails** — Auto-generated image previews with file-type icons for documents
+- **Full-screen Preview** — QuickLook integration for viewing any supported file format
+
+### 🎨 User Interface
+- **2-Column Grid View** — Large, rich thumbnail cards with file info
+- **Apple Files-style List View** — Clean horizontal rows with separators
+- **Sort Options** — Sort by Name, Kind, Date, or Size (with ascending/descending toggle)
+- **Animated Splash Screen** — Premium app launch with spring animations
+- **Persistent Preferences** — View mode and sort choices survive app restarts
+- **Dark/Light Mode** — Adapts automatically to system appearance
+- **Haptic Feedback** — Tactile responses on key interactions
+
+---
+
+## 🏗️ Architecture
+
+```
+SafeFolder/
+├── App/
+│   ├── AppDelegate.swift          # Lifecycle, privacy overlay, splash launch
+│   ├── SceneDelegate.swift        # Scene management
+│   └── AppTheme.swift             # Design system (colors, fonts, shadows)
+├── Models/
+│   ├── Folder.swift               # Folder data model
+│   └── FileItem.swift             # File metadata model
+├── ViewModels/
+│   ├── FolderListViewModel.swift  # Folder CRUD operations
+│   └── FolderDetailViewModel.swift# File ops, sorting, auto-lock timer
+├── Views/
+│   ├── SplashViewController.swift     # Animated launch screen
+│   ├── FolderListViewController.swift # Home screen grid
+│   ├── FolderDetailViewController.swift # File browser (grid/list)
+│   ├── CreateFolderViewController.swift # New folder sheet
+│   ├── AuthViewController.swift       # Biometric/password auth
+│   └── Cells/
+│       ├── FolderCell.swift       # Folder card cell
+│       ├── FileCell.swift         # Grid-style file cell
+│       └── FileListCell.swift     # List-style file row
+├── Utilities/
+│   ├── BiometricManager.swift     # Face ID / Touch ID wrapper
+│   ├── KeychainManager.swift      # Secure password storage
+│   ├── FileStorageManager.swift   # File system operations
+│   └── HashingUtility.swift       # SHA-256 hashing
+└── Resources/
+    ├── Assets.xcassets/           # App icon, colors
+    └── Info.plist                 # Permissions, launch config
+```
+
+### Design Pattern: **MVVM**
+- **Models** — Pure data structures with `Codable` conformance
+- **ViewModels** — Business logic, state management, no UIKit imports
+- **Views** — 100% programmatic UIKit (no storyboards for main UI)
+
+---
+
+## 🔧 Tech Stack
+
+| Component | Technology |
+|---|---|
+| **UI Framework** | UIKit (Programmatic) |
+| **Layout** | Auto Layout + Compositional Layout |
+| **Security** | LocalAuthentication (Face ID/Touch ID) |
+| **Keychain** | Security.framework |
+| **Hashing** | CryptoKit (SHA-256) |
+| **File System** | FileManager |
+| **Photo Import** | PhotosUI (PHPicker) |
+| **Doc Import** | UIDocumentPickerViewController |
+| **File Preview** | QuickLook Framework |
+| **Persistence** | UserDefaults + Codable |
+| **Min Target** | iOS 15.0 |
+
+---
+
+## 🚀 Getting Started
+
+### Prerequisites
+- **Xcode 15+**
+- **iOS 15.0+** deployment target
+- macOS Ventura or later
+
+### Installation
+
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/YOUR_USERNAME/SafeFolder.git
+   cd SafeFolder
+   ```
+
+2. **Open in Xcode**
+   ```bash
+   open SafeFolder.xcodeproj
+   ```
+
+3. **Select a simulator or device** and press `⌘+R` to build & run
+
+> **Note:** Face ID testing on the Simulator requires using **Features → Face ID → Enrolled** and then **Matching Face** from the Simulator menu bar.
+
+---
+
+## 🛡️ Security Model
+
+```
+┌─────────────────────────────────┐
+│         User Interaction        │
+├────────────┬────────────────────┤
+│  Face ID   │   Password Entry   │
+│ (LAContext)│  (UIAlertController)│
+├────────────┴────────────────────┤
+│       BiometricManager          │
+│       KeychainManager           │
+│  (SHA-256 hash + Keychain)      │
+├─────────────────────────────────┤
+│    FileStorageManager           │
+│  (Documents/SafeFolderData)     │
+└─────────────────────────────────┘
+```
+
+- **Passwords** are never stored in plaintext — they are SHA-256 hashed before saving to the iOS Keychain
+- **Auto-lock** triggers after 15s of inactivity, requiring re-authentication
+- **Background privacy** blur overlay activates when the app enters background
+- **Delete protection** requires re-authentication for secure folders
 
 ---
 
 ## 📋 Edge Cases Handled
 
-- ✅ Biometric not available → fallback to password
-- ✅ Wrong password → error with retry (max 5 attempts, 30s lockout)
-- ✅ Empty folder → custom empty state UI
-- ✅ Duplicate file names → auto-rename with suffix
-- ✅ App killed while folder open → locks on next launch
-- ✅ Storage full → appropriate error message
-- ✅ Face ID permission denied → Settings redirect prompt
+| Scenario | Handling |
+|---|---|
+| Biometric not available | Falls back to password authentication |
+| Wrong password (5 attempts) | 30-second lockout with visual timer |
+| Empty folder | Custom illustrated empty state |
+| Duplicate file names | Auto-renamed with numeric suffix |
+| App killed while folder open | Locks on next launch |
+| Storage full | User-facing error message |
+| Face ID permission denied | Settings redirect prompt |
+| Secure folder deletion | Requires re-authentication |
+
+---
+
+## 🎨 Design System
+
+| Token | Value |
+|---|---|
+| **Primary Background** | `#F4F6FC` (light) / `#0F1221` (dark) |
+| **Accent Color** | `#4078FF` (Electric Blue) |
+| **Accent Gradient End** | `#8C4DFF` (Purple) |
+| **Card Background** | `#FFFFFF` / `#1A1D2E` |
+| **Corner Radius** | 16pt (cards), 12pt (cells) |
+| **Typography** | SF Pro (system default) |
 
 ---
 
 ## 📄 License
 
 This project is for educational and personal use.
+
+---
+
+<p align="center">
+  <strong>Built with ❤️ using Swift & UIKit</strong>
+</p>
